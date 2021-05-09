@@ -36,7 +36,7 @@ impl Person {
         extract_from_name(&self.name, &mut CF);
         extract_from_gender_date(&self.gender, &self.dob, &mut CF);
 
-        // assert!(CF.len() == 11);
+        assert!(CF.len() == 11);
 
         CF.to_uppercase()
     }
@@ -144,8 +144,10 @@ fn extract_from_name(name: &str, CF: &mut String) {
 /// Extract CF chars from gender and date.
 fn extract_from_gender_date(gender: &Gender, dob: &str, CF: &mut String) {
     // last two digits of year
-    CF.push(dob.to_string().pop().unwrap());
-    CF.push(dob.to_string().pop().unwrap());
+    let mut last_two: String = dob.chars().rev().take(2).collect(); // reverse order
+    last_two = last_two.chars().rev().collect();
+
+    CF.push_str(&last_two);
 
     let sp = dob.split('/').collect::<Vec<_>>();
     CF.push(month_letter(sp[1]));
@@ -161,7 +163,7 @@ fn extract_from_gender_date(gender: &Gender, dob: &str, CF: &mut String) {
             }
         }
         Gender::F => {
-            let mut day = sp[1].parse::<u32>().unwrap();
+            let mut day = sp[0].parse::<u32>().unwrap();
             day += 40;
 
             CF.push_str(&day.to_string());
@@ -214,11 +216,21 @@ fn month_letter(month_int: &str) -> char {
     }
 }
 
-// TODO add some more tests (with asserts)
 fn main() -> Result<(), Box<dyn Error>> {
     let matt = Person::new("Matt".to_string(), "Edabit".to_string(), Gender::M, "1/1/1900".to_string());
 
-    println!("Code: {}", matt.get_CF());
+    assert!(matt.get_CF() == "DBTMTT00A01");
+    println!("Test #1 passed");
+
+    let helen = Person::new("Helen".to_string(), "Yu".to_string(), Gender::F, "1/12/1950".to_string());
+
+    assert!(helen.get_CF() == "YUXHLN50T41");
+    println!("Test #2 passed");
+
+    let mickey = Person::new("Mickey".to_string(), "Mouse".to_string(), Gender::M, "16/1/1928".to_string());
+
+    assert!(mickey.get_CF() == "MSOMKY28A16");
+    println!("Test #3 passed");
 
     Ok(())
 }
