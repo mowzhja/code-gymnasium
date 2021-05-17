@@ -1,0 +1,11 @@
+[package]
+name = "four_dim_adventure"
+version = "0.1.0"
+authors = ["mowzhja <mowzhja@protonmail.ch>"]
+edition = "2018"
+# from: https://adventofcode.com/2018/day/25
+
+[profile.dev]
+opt-level=1
+
+[dependencies]
