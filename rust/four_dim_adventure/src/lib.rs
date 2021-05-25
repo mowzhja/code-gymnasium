@@ -12,8 +12,7 @@ where
     Ok(io::BufReader::new(file).lines())
 }
 
-/// Parses the lines of the input file and transforms them in coordinates with which we can
-/// operate.
+/// Parses the lines of the input file and transforms them in coordinates with which we can operate.
 pub fn parse_coordinates(line: &str) -> Vec<isize> {
     let mut coords: Vec<isize> = Vec::new();
 
@@ -36,19 +35,16 @@ pub fn manhattan_distance(x: &Vec<isize>, y: &Vec<isize>) -> isize {
         .sum()
 }
 
-/// Returns the points in spacetime that are in the same constellation as x.
-pub fn in_same_constellation(x: &Vec<isize>, spacetime: &Vec<Vec<isize>>) -> Vec<Vec<isize>> {
-    let mut in_same: Vec<Vec<isize>> = Vec::new();
+/// Calculates distances from point at index idx to all the other points (including itself,
+/// in which case the distance is one).
+pub fn get_distances(idx: usize, spacetime: &Vec<Vec<isize>>) -> Vec<isize> {
+    let mut distances: Vec<isize> = Vec::new();
 
     for point in spacetime.iter() {
-        if point != x {
-            if manhattan_distance(point, x) <= 3 {
-                in_same.push(point.clone());
-            }
-        }
+        distances.push(manhattan_distance(&spacetime[idx], point));
     }
 
-    in_same
+    distances
 }
 
 #[cfg(test)]
