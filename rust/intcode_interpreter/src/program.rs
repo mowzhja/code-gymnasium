@@ -1,5 +1,6 @@
 const HALT: usize = 99;
 
+#[derive(Clone)]
 pub struct Program {
     ip: usize, // instruction pointer (mostly here for debug purposes)
     instructions: Vec<usize>,
@@ -40,7 +41,17 @@ impl Program {
             }
         }
     }
-    
+
+    /// Sets the noun to the desired value
+    pub fn set_noun(&mut self, value: usize) {
+        self.instructions[1] = value;
+    }
+
+    /// Sets the verb to the desired value
+    pub fn set_verb(&mut self, value: usize) {
+        self.instructions[2] = value;
+    }
+
     /// Restores the gravity assist program to 1202 program alarm state
     pub fn restore_1202(&mut self) {
         self.instructions[1] = 12;
