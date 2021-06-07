@@ -6,7 +6,7 @@ use intcode_interpreter::*;
 fn main() {
     let text = fs::read_to_string("code.txt").expect("error reading file");
     let p_vec = parse_program(&text);
-    let program = intcode_interpreter::program::Program::new(p_vec);
+    let program = program::Program::new(p_vec);
 
     // Part 1:
     // program.restore_1202();
