@@ -19,21 +19,27 @@ impl Program {
     /// Executes the program
     pub fn exec(&mut self) {
         loop {
-            // matches opcode
-            match self.instructions[self.ip] {
+            let (opcode, _, _, _) = self.get_modes();
+            match opcode as isize {
                 1 => {
                     let dest = self.instructions[self.ip + 3] as usize;
 
-                    self.instructions[dest] =
-                        self.instructions[self.instructions[self.ip + 1] as usize] + self.instructions[self.instructions[self.ip + 2] as usize];
-                    self.ip += 4;
+                    let (_, mode1, mode2, mode3) = self.get_modes();
+                    if mode3 != 0 {
+                        panic!("the address should always be in address mode");
+                    }
+
+                    self.perform_addition(mode1, mode2, dest);
                 }
                 2 => {
                     let dest = self.instructions[self.ip + 3] as usize;
 
-                    self.instructions[dest] =
-                        self.instructions[self.instructions[self.ip + 1] as usize] * self.instructions[self.instructions[self.ip + 2] as usize];
-                    self.ip += 4;
+                    let (_, mode1, mode2, mode3) = self.get_modes();
+                    if mode3 != 0 {
+                        panic!("the address should always be in address mode");
+                    }
+
+                    self.perform_multiplication(mode1, mode2, dest);
                 }
                 3 => {
                     let input = self.input();
@@ -59,10 +65,74 @@ impl Program {
         }
     }
 
+    /// Performs the addition operation (opcode 1)
+    fn perform_addition(&mut self, mode1: usize, mode2: usize, dest: usize) {
+        if mode1 == 0 && mode2 == 0 {
+            // both in address mode
+            self.instructions[dest] = self.instructions[self.instructions[self.ip + 1] as usize]
+                + self.instructions[self.instructions[self.ip + 2] as usize];
+        }
+
+        if mode1 == 1 && mode2 == 0 {
+            // left operand in immediate, right in address
+            self.instructions[dest] = self.instructions[self.ip + 1]
+                + self.instructions[self.instructions[self.ip + 2] as usize];
+        }
+
+        if mode1 == 0 && mode2 == 1 {
+            // left operand in address, right in immediate
+            self.instructions[dest] = self.instructions[self.instructions[self.ip + 1] as usize]
+                + self.instructions[self.ip + 2];
+        }
+
+        if mode1 == 1 && mode2 == 1 {
+            // both in immediate mode
+            self.instructions[dest] =
+                self.instructions[self.ip + 1] + self.instructions[self.ip + 2];
+        }
+
+        self.ip += 4;
+    }
+
+    /// Performs the multiplication operation (opcode 2)
+    fn perform_multiplication(&mut self, mode1: usize, mode2: usize, dest: usize) {
+        if mode1 == 0 && mode2 == 0 {
+            // both in address mode
+            self.instructions[dest] = self.instructions[self.instructions[self.ip + 1] as usize]
+                * self.instructions[self.instructions[self.ip + 2] as usize];
+        }
+
+        if mode1 == 1 && mode2 == 0 {
+            // left operand in immediate, right in address
+            self.instructions[dest] = self.instructions[self.ip + 1]
+                * self.instructions[self.instructions[self.ip + 2] as usize];
+        }
+
+        if mode1 == 0 && mode2 == 1 {
+            // left operand in address, right in immediate
+            self.instructions[dest] = self.instructions[self.instructions[self.ip + 1] as usize]
+                * self.instructions[self.ip + 2];
+        }
+
+        if mode1 == 1 && mode2 == 1 {
+            // both in immediate mode
+            self.instructions[dest] =
+                self.instructions[self.ip + 1] * self.instructions[self.ip + 2];
+        }
+
+        self.ip += 4;
+    }
+
     /// Extracts the information about the various modes for opcode and parameters of an
     /// instruction
-    fn get_modes(&self) -> (usize, isize, isize, isize) {
+    fn get_modes(&self) -> (usize, usize, usize, usize) {
         let mut s = self.instructions[self.ip].to_string();
+        // TODO this if is kind ugly...
+        if s == "3" || s == "4" {
+            // return immediately if opcode is 3 or 4
+            return (s.parse::<usize>().unwrap(), 0, 0, 0);
+        }
+
         if s.len() == 4 {
             // either a 1 or a 2 with a missing leading 0
             s = format!("0{}", s);
@@ -70,26 +140,33 @@ impl Program {
 
         let opcode = s[3..].parse::<usize>().unwrap();
         // they appear in reverse order
-        let mode1 = s.remove(2).to_digit(10).unwrap() as isize;
-        let mode2 = s.remove(1).to_digit(10).unwrap() as isize;
-        let mode3 = s.remove(0).to_digit(10).unwrap() as isize;
+        let mode1 = s.remove(2).to_digit(10).unwrap() as usize;
+        let mode2 = s.remove(1).to_digit(10).unwrap() as usize;
+        let mode3 = s.remove(0).to_digit(10).unwrap() as usize;
 
         (opcode, mode1, mode2, mode3)
     }
 
-    /// Takes input
+    /// Takes input from user and returns it for further processing
     fn input(&self) -> isize {
         let mut s = String::new();
-        print!("INPUT:");
+
+        println!("INPUT:");
         io::stdin().read_line(&mut s).expect("failed reading input");
 
-        // TODO input checking should be added
-        s.parse::<isize>().unwrap()
+        if let Ok(n) = s.trim().parse::<isize>() {
+            return n;
+        } else {
+            panic!("expected an integer as input");
+        }
     }
 
-    /// Prints output
+    /// Prints output to the screen
     fn output(&self) {
-        println!("{}", self.instructions[self.instructions[self.ip + 1] as usize]);
+        println!(
+            "{}",
+            self.instructions[self.instructions[self.ip + 1] as usize]
+        );
     }
 
     /// Sets the noun to the desired value
