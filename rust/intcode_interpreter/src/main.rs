@@ -1,5 +1,4 @@
 use std::fs;
-use std::process::exit;
 
 use intcode_interpreter::*;
 

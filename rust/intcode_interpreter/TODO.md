@@ -1,2 +1,3 @@
 - [x] complete first version (day 2)
 - [ ] complete second version (day 5)
+- [ ] REFACTOR!

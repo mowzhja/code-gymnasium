@@ -1,4 +1,4 @@
-pub mod program; // pub to expose it to the whole crate
+pub mod program;
 
 use program::Program;
 

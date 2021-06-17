@@ -16,6 +16,27 @@ impl Program {
         }
     }
 
+    /// Sets the noun to the desired value
+    pub fn set_noun(&mut self, value: isize) {
+        self.instructions[1] = value;
+    }
+
+    /// Sets the verb to the desired value
+    pub fn set_verb(&mut self, value: isize) {
+        self.instructions[2] = value;
+    }
+
+    /// Restores the gravity assist program to 1202 program alarm state
+    pub fn restore_1202(&mut self) {
+        self.instructions[1] = 12;
+        self.instructions[2] = 2;
+    }
+
+    /// Gets the the value at address 0 (in our case the desired result for both days 2 and 5)
+    pub fn at_zero(&self) -> isize {
+        self.instructions[0]
+    }
+
     /// Executes the program
     pub fn exec(&mut self) {
         loop {
@@ -47,6 +68,7 @@ impl Program {
 
                     self.instructions[dest] = input;
                     self.ip += 2;
+                    println!(); // for better formatting
                 }
                 4 => {
                     self.output();
@@ -63,6 +85,38 @@ impl Program {
                 }
             }
         }
+    }
+
+    /// Extracts the information about the various modes for opcode and parameters of an
+    /// instruction
+    fn get_modes(&self) -> (usize, usize, usize, usize) {
+        let (opcode, mode1, mode2, mode3);
+        let mut s = self.instructions[self.ip].to_string();
+
+        // TODO this if is kinda ugly...
+        if s.len() == 1 || s == "99" {
+            // return immediately if HALTING or no specification (with default address mode)
+            return (s.parse::<usize>().unwrap(), 0, 0, 0);
+        }
+
+        if s.len() == 4 {
+            // either a 1 or a 2 with a missing leading 0
+            s = format!("0{}", s);
+
+            opcode = s[3..].parse::<usize>().unwrap();
+            // they appear in reverse order
+            mode1 = s.remove(2).to_digit(10).unwrap() as usize;
+            mode2 = s.remove(1).to_digit(10).unwrap() as usize;
+            mode3 = s.remove(0).to_digit(10).unwrap() as usize;
+        } else {
+            // we got a 4 (output) instruction
+            opcode = s[1..].parse::<usize>().unwrap();
+            mode1 = s.remove(0).to_digit(10).unwrap() as usize;
+            mode2 = 0;
+            mode3 = 0;
+        }
+
+        (opcode, mode1, mode2, mode3)
     }
 
     /// Performs the addition operation (opcode 1)
@@ -123,30 +177,6 @@ impl Program {
         self.ip += 4;
     }
 
-    /// Extracts the information about the various modes for opcode and parameters of an
-    /// instruction
-    fn get_modes(&self) -> (usize, usize, usize, usize) {
-        let mut s = self.instructions[self.ip].to_string();
-        // TODO this if is kind ugly...
-        if s == "3" || s == "4" {
-            // return immediately if opcode is 3 or 4
-            return (s.parse::<usize>().unwrap(), 0, 0, 0);
-        }
-
-        if s.len() == 4 {
-            // either a 1 or a 2 with a missing leading 0
-            s = format!("0{}", s);
-        }
-
-        let opcode = s[3..].parse::<usize>().unwrap();
-        // they appear in reverse order
-        let mode1 = s.remove(2).to_digit(10).unwrap() as usize;
-        let mode2 = s.remove(1).to_digit(10).unwrap() as usize;
-        let mode3 = s.remove(0).to_digit(10).unwrap() as usize;
-
-        (opcode, mode1, mode2, mode3)
-    }
-
     /// Takes input from user and returns it for further processing
     fn input(&self) -> isize {
         let mut s = String::new();
@@ -164,29 +194,8 @@ impl Program {
     /// Prints output to the screen
     fn output(&self) {
         println!(
-            "{}",
+            "OUTPUT: {}",
             self.instructions[self.instructions[self.ip + 1] as usize]
         );
-    }
-
-    /// Sets the noun to the desired value
-    pub fn set_noun(&mut self, value: isize) {
-        self.instructions[1] = value;
-    }
-
-    /// Sets the verb to the desired value
-    pub fn set_verb(&mut self, value: isize) {
-        self.instructions[2] = value;
-    }
-
-    /// Restores the gravity assist program to 1202 program alarm state
-    pub fn restore_1202(&mut self) {
-        self.instructions[1] = 12;
-        self.instructions[2] = 2;
-    }
-
-    /// Gets the the value at address 0 (in our case the desired result for both days 2 and 5)
-    pub fn at_zero(&self) -> isize {
-        self.instructions[0]
     }
 }
