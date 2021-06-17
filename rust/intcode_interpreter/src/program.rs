@@ -71,9 +71,20 @@ impl Program {
                     println!(); // for better formatting
                 }
                 4 => {
-                    self.output();
+                    let (_, mode, _, _) = self.get_modes(); // rest are 0
+                    self.output(mode);
                     self.ip += 2;
                 }
+                5 => {
+                    let (_, mode1, mode2, _) = self.get_modes(); // mode3 is 0
+                    self.perform_jump_if(true, mode1, mode2);
+                }
+                6 => {
+                    let (_, mode1, mode2, _) = self.get_modes(); // mode3 is 0
+                    self.perform_jump_if(false, mode1, mode2);
+                }
+                7 => {}
+                8 => {}
                 HALT => {
                     return;
                 }
@@ -192,10 +203,49 @@ impl Program {
     }
 
     /// Prints output to the screen
-    fn output(&self) {
-        println!(
-            "OUTPUT: {}",
-            self.instructions[self.instructions[self.ip + 1] as usize]
-        );
+    fn output(&self, mode1: usize) {
+        if mode1 == 1 {
+            // immediate mode
+            println!("OUTPUT: {}", self.instructions[self.ip + 1]);
+        } else {
+            println!(
+                "OUTPUT: {}",
+                self.instructions[self.instructions[self.ip + 1] as usize]
+            );
+        }
+    }
+
+    /// Performs the jump operation (both jump_false and jump_true)
+    fn perform_jump_if(&mut self, choice: bool, mode1: usize, mode2: usize) {
+        let first;
+        if mode1 == 1 {
+            // immediate first operand
+            first = self.instructions[self.ip + 1];
+        } else {
+            first = self.instructions[self.instructions[self.ip + 1] as usize];
+        }
+
+        match choice {
+            true => {
+                if first != 0 {
+                    if mode2 == 1 {
+                        self.ip = self.instructions[self.ip + 2] as usize;
+                    } else {
+                        self.ip =
+                            self.instructions[self.instructions[self.ip + 2] as usize] as usize;
+                    }
+                }
+            }
+            false => {
+                if first == 0 {
+                    if mode2 == 1 {
+                        self.ip = self.instructions[self.ip + 2] as usize;
+                    } else {
+                        self.ip =
+                            self.instructions[self.instructions[self.ip + 2] as usize] as usize;
+                    }
+                }
+            }
+        }
     }
 }
