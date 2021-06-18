@@ -83,8 +83,16 @@ impl Program {
                     let (_, mode1, mode2, _) = self.get_modes(); // mode3 is 0
                     self.perform_jump_if(false, mode1, mode2);
                 }
-                7 => {}
-                8 => {}
+                7 => {
+                    let dest = self.instructions[self.ip + 3] as usize;
+                    let (_, mode1, mode2, mode3) = self.get_modes();
+                    self.perform_less_than(mode1, mode2, mode3, dest);
+                }
+                8 => {
+                    let dest = self.instructions[self.ip + 3] as usize;
+                    let (_, mode1, mode2, mode3) = self.get_modes();
+                    self.perform_equals(mode1, mode2, mode3, dest);
+                }
                 HALT => {
                     return;
                 }
@@ -247,5 +255,101 @@ impl Program {
                 }
             }
         }
+    }
+
+    /// Performs the less_than operation
+    fn perform_less_than(&mut self, mode1: usize, mode2: usize, mode3: usize, dest: usize) {
+        if mode1 == 0 && mode2 == 0 {
+            // both in address mode
+            self.instructions[dest] = if self.instructions[self.instructions[self.ip + 1] as usize]
+                > self.instructions[self.instructions[self.ip + 2] as usize]
+            {
+                1
+            } else {
+                0
+            };
+        }
+
+        if mode1 == 1 && mode2 == 0 {
+            // left operand in immediate, right in address
+            self.instructions[dest] = if self.instructions[self.ip + 1]
+                > self.instructions[self.instructions[self.ip + 2] as usize]
+            {
+                1
+            } else {
+                0
+            };
+        }
+
+        if mode1 == 0 && mode2 == 1 {
+            // left operand in address, right in immediate
+            self.instructions[dest] = if self.instructions[self.instructions[self.ip + 1] as usize]
+                > self.instructions[self.ip + 2]
+            {
+                1
+            } else {
+                0
+            };
+        }
+
+        if mode1 == 1 && mode2 == 1 {
+            // both in immediate mode
+            self.instructions[dest] =
+                if self.instructions[self.ip + 1] > self.instructions[self.ip + 2] {
+                    1
+                } else {
+                    0
+                };
+        }
+
+        self.ip += 4;
+    }
+
+    /// Performs the equals operation
+    fn perform_equals(&mut self, mode1: usize, mode2: usize, mode3: usize, dest: usize) {
+        if mode1 == 0 && mode2 == 0 {
+            // both in address mode
+            self.instructions[dest] = if self.instructions[self.instructions[self.ip + 1] as usize]
+                == self.instructions[self.instructions[self.ip + 2] as usize]
+            {
+                1
+            } else {
+                0
+            };
+        }
+
+        if mode1 == 1 && mode2 == 0 {
+            // left operand in immediate, right in address
+            self.instructions[dest] = if self.instructions[self.ip + 1]
+                == self.instructions[self.instructions[self.ip + 2] as usize]
+            {
+                1
+            } else {
+                0
+            };
+        }
+
+        if mode1 == 0 && mode2 == 1 {
+            // left operand in address, right in immediate
+            self.instructions[dest] = if self.instructions[self.instructions[self.ip + 1] as usize]
+                == self.instructions[self.ip + 2]
+            {
+                1
+            } else {
+                0
+            };
+        }
+
+        if mode1 == 1 && mode2 == 1 {
+            // both in immediate mode
+            self.instructions[dest] =
+                if self.instructions[self.ip + 1] == self.instructions[self.ip + 2] {
+                    1
+                } else {
+                    0
+                };
+        }
+
+        self.ip += 4;
     }
 }
