@@ -1,6 +1,6 @@
 use std::io;
 
-const HALT: isize = 99;
+const HALT: usize = 99;
 
 #[derive(Clone)]
 pub struct Program {
@@ -41,25 +41,17 @@ impl Program {
     pub fn exec(&mut self) {
         loop {
             let (opcode, _, _, _) = self.get_modes();
-            match opcode as isize {
+            match opcode {
                 1 => {
                     let dest = self.instructions[self.ip + 3] as usize;
 
-                    let (_, mode1, mode2, mode3) = self.get_modes();
-                    if mode3 != 0 {
-                        panic!("the address should always be in address mode");
-                    }
-
+                    let (_, mode1, mode2, _) = self.get_modes();
                     self.perform_addition(mode1, mode2, dest);
                 }
                 2 => {
                     let dest = self.instructions[self.ip + 3] as usize;
 
-                    let (_, mode1, mode2, mode3) = self.get_modes();
-                    if mode3 != 0 {
-                        panic!("the address should always be in address mode");
-                    }
-
+                    let (_, mode1, mode2, _) = self.get_modes();
                     self.perform_multiplication(mode1, mode2, dest);
                 }
                 3 => {
@@ -68,7 +60,6 @@ impl Program {
 
                     self.instructions[dest] = input;
                     self.ip += 2;
-                    println!(); // for better formatting
                 }
                 4 => {
                     let (_, mode, _, _) = self.get_modes(); // rest are 0
@@ -85,13 +76,15 @@ impl Program {
                 }
                 7 => {
                     let dest = self.instructions[self.ip + 3] as usize;
-                    let (_, mode1, mode2, mode3) = self.get_modes();
-                    self.perform_less_than(mode1, mode2, mode3, dest);
+
+                    let (_, mode1, mode2, _) = self.get_modes();
+                    self.perform_less_than(mode1, mode2, dest);
                 }
                 8 => {
                     let dest = self.instructions[self.ip + 3] as usize;
-                    let (_, mode1, mode2, mode3) = self.get_modes();
-                    self.perform_equals(mode1, mode2, mode3, dest);
+
+                    let (_, mode1, mode2, _) = self.get_modes();
+                    self.perform_equals(mode1, mode2, dest);
                 }
                 HALT => {
                     return;
@@ -114,7 +107,6 @@ impl Program {
 
         // TODO this if is kinda ugly...
         if s.len() == 1 || s == "99" {
-            // return immediately if HALTING or no specification (with default address mode)
             return (s.parse::<usize>().unwrap(), 0, 0, 0);
         }
 
@@ -140,28 +132,30 @@ impl Program {
 
     /// Performs the addition operation (opcode 1)
     fn perform_addition(&mut self, mode1: usize, mode2: usize, dest: usize) {
-        if mode1 == 0 && mode2 == 0 {
-            // both in address mode
-            self.instructions[dest] = self.instructions[self.instructions[self.ip + 1] as usize]
-                + self.instructions[self.instructions[self.ip + 2] as usize];
-        }
-
-        if mode1 == 1 && mode2 == 0 {
-            // left operand in immediate, right in address
-            self.instructions[dest] = self.instructions[self.ip + 1]
-                + self.instructions[self.instructions[self.ip + 2] as usize];
-        }
-
-        if mode1 == 0 && mode2 == 1 {
-            // left operand in address, right in immediate
-            self.instructions[dest] = self.instructions[self.instructions[self.ip + 1] as usize]
-                + self.instructions[self.ip + 2];
-        }
-
-        if mode1 == 1 && mode2 == 1 {
-            // both in immediate mode
-            self.instructions[dest] =
-                self.instructions[self.ip + 1] + self.instructions[self.ip + 2];
+        if mode1 == 0 {
+            // address mode
+            if mode2 == 0 {
+                // address mode
+                self.instructions[dest] = self.instructions
+                    [self.instructions[self.ip + 1] as usize]
+                    + self.instructions[self.instructions[self.ip + 2] as usize];
+            } else {
+                // immediate mode
+                self.instructions[dest] = self.instructions
+                    [self.instructions[self.ip + 1] as usize]
+                    + self.instructions[self.ip + 2];
+            }
+        } else {
+            // immediate mode
+            if mode2 == 0 {
+                // address mode
+                self.instructions[dest] = self.instructions[self.ip + 1]
+                    + self.instructions[self.instructions[self.ip + 2] as usize];
+            } else {
+                // immediate mode
+                self.instructions[dest] =
+                    self.instructions[self.ip + 1] + self.instructions[self.ip + 2];
+            }
         }
 
         self.ip += 4;
@@ -169,34 +163,36 @@ impl Program {
 
     /// Performs the multiplication operation (opcode 2)
     fn perform_multiplication(&mut self, mode1: usize, mode2: usize, dest: usize) {
-        if mode1 == 0 && mode2 == 0 {
-            // both in address mode
-            self.instructions[dest] = self.instructions[self.instructions[self.ip + 1] as usize]
-                * self.instructions[self.instructions[self.ip + 2] as usize];
-        }
-
-        if mode1 == 1 && mode2 == 0 {
-            // left operand in immediate, right in address
-            self.instructions[dest] = self.instructions[self.ip + 1]
-                * self.instructions[self.instructions[self.ip + 2] as usize];
-        }
-
-        if mode1 == 0 && mode2 == 1 {
-            // left operand in address, right in immediate
-            self.instructions[dest] = self.instructions[self.instructions[self.ip + 1] as usize]
-                * self.instructions[self.ip + 2];
-        }
-
-        if mode1 == 1 && mode2 == 1 {
-            // both in immediate mode
-            self.instructions[dest] =
-                self.instructions[self.ip + 1] * self.instructions[self.ip + 2];
+        if mode1 == 0 {
+            // address mode
+            if mode2 == 0 {
+                // address mode
+                self.instructions[dest] = self.instructions
+                    [self.instructions[self.ip + 1] as usize]
+                    * self.instructions[self.instructions[self.ip + 2] as usize];
+            } else {
+                // immediate mode
+                self.instructions[dest] = self.instructions
+                    [self.instructions[self.ip + 1] as usize]
+                    * self.instructions[self.ip + 2];
+            }
+        } else {
+            // immediate mode
+            if mode2 == 0 {
+                // address mode
+                self.instructions[dest] = self.instructions[self.ip + 1]
+                    * self.instructions[self.instructions[self.ip + 2] as usize];
+            } else {
+                // immediate mode
+                self.instructions[dest] =
+                    self.instructions[self.ip + 1] * self.instructions[self.ip + 2];
+            }
         }
 
         self.ip += 4;
     }
 
-    /// Takes input from user and returns it for further processing
+    /// Takes input from user and returns it for further processing (opcode 3)
     fn input(&self) -> isize {
         let mut s = String::new();
 
@@ -204,150 +200,160 @@ impl Program {
         io::stdin().read_line(&mut s).expect("failed reading input");
 
         if let Ok(n) = s.trim().parse::<isize>() {
+            println!(); // for better formatting
             return n;
         } else {
             panic!("expected an integer as input");
         }
     }
 
-    /// Prints output to the screen
+    /// Prints output to the screen (opcode 4)
     fn output(&self, mode1: usize) {
-        if mode1 == 1 {
-            // immediate mode
-            println!("OUTPUT: {}", self.instructions[self.ip + 1]);
-        } else {
+        if mode1 == 0 {
+            // address mode
             println!(
                 "OUTPUT: {}",
                 self.instructions[self.instructions[self.ip + 1] as usize]
             );
+        } else {
+            // immediate mode
+            println!("OUTPUT: {}", self.instructions[self.ip + 1]);
         }
     }
 
-    /// Performs the jump operation (both jump_false and jump_true)
+    /// Performs the jump operations, both jump_true and jump_false (opcodes 5 and 6)
     fn perform_jump_if(&mut self, choice: bool, mode1: usize, mode2: usize) {
-        let first;
-        if mode1 == 1 {
-            // immediate first operand
-            first = self.instructions[self.ip + 1];
+        let first = if mode1 == 0 {
+            // address mode
+            self.instructions[self.instructions[self.ip + 1] as usize]
         } else {
-            first = self.instructions[self.instructions[self.ip + 1] as usize];
-        }
+            // immediate mode
+            self.instructions[self.ip + 1]
+        };
 
         match choice {
             true => {
                 if first != 0 {
-                    if mode2 == 1 {
-                        self.ip = self.instructions[self.ip + 2] as usize;
-                    } else {
+                    if mode2 == 0 {
+                        // address mode
                         self.ip =
                             self.instructions[self.instructions[self.ip + 2] as usize] as usize;
+                    } else {
+                        // immediate mode
+                        self.ip = self.instructions[self.ip + 2] as usize;
                     }
                 }
             }
             false => {
                 if first == 0 {
-                    if mode2 == 1 {
-                        self.ip = self.instructions[self.ip + 2] as usize;
-                    } else {
+                    if mode2 == 0 {
+                        // address mode
                         self.ip =
                             self.instructions[self.instructions[self.ip + 2] as usize] as usize;
+                    } else {
+                        // immediate mode
+                        self.ip = self.instructions[self.ip + 2] as usize;
                     }
                 }
             }
         }
     }
 
-    /// Performs the less_than operation
-    fn perform_less_than(&mut self, mode1: usize, mode2: usize, mode3: usize, dest: usize) {
-        if mode1 == 0 && mode2 == 0 {
-            // both in address mode
-            self.instructions[dest] = if self.instructions[self.instructions[self.ip + 1] as usize]
-                > self.instructions[self.instructions[self.ip + 2] as usize]
-            {
-                1
-            } else {
-                0
-            };
-        }
-
-        if mode1 == 1 && mode2 == 0 {
-            // left operand in immediate, right in address
-            self.instructions[dest] = if self.instructions[self.ip + 1]
-                > self.instructions[self.instructions[self.ip + 2] as usize]
-            {
-                1
-            } else {
-                0
-            };
-        }
-
-        if mode1 == 0 && mode2 == 1 {
-            // left operand in address, right in immediate
-            self.instructions[dest] = if self.instructions[self.instructions[self.ip + 1] as usize]
-                > self.instructions[self.ip + 2]
-            {
-                1
-            } else {
-                0
-            };
-        }
-
-        if mode1 == 1 && mode2 == 1 {
-            // both in immediate mode
-            self.instructions[dest] =
-                if self.instructions[self.ip + 1] > self.instructions[self.ip + 2] {
+    /// Performs the less_than operation (opcode 7)
+    fn perform_less_than(&mut self, mode1: usize, mode2: usize, dest: usize) {
+        if mode1 == 0 {
+            // address mode
+            if mode2 == 0 {
+                // address mode
+                self.instructions[dest] = if self.instructions
+                    [self.instructions[self.ip + 1] as usize]
+                    < self.instructions[self.instructions[self.ip + 2] as usize]
+                {
                     1
                 } else {
                     0
                 };
+            } else {
+                // immediate mode
+                self.instructions[dest] = if self.instructions
+                    [self.instructions[self.ip + 1] as usize]
+                    < self.instructions[self.ip + 2]
+                {
+                    1
+                } else {
+                    0
+                };
+            }
+        } else {
+            // immediate mode
+            if mode2 == 0 {
+                // address mode
+                self.instructions[dest] = if self.instructions[self.ip + 1]
+                    < self.instructions[self.instructions[self.ip + 2] as usize]
+                {
+                    1
+                } else {
+                    0
+                };
+            } else {
+                // immediate mode
+                self.instructions[dest] =
+                    if self.instructions[self.ip + 1] < self.instructions[self.ip + 2] {
+                        1
+                    } else {
+                        0
+                    };
+            }
         }
 
         self.ip += 4;
     }
 
-    /// Performs the equals operation
-    fn perform_equals(&mut self, mode1: usize, mode2: usize, mode3: usize, dest: usize) {
-        if mode1 == 0 && mode2 == 0 {
-            // both in address mode
-            self.instructions[dest] = if self.instructions[self.instructions[self.ip + 1] as usize]
-                == self.instructions[self.instructions[self.ip + 2] as usize]
-            {
-                1
-            } else {
-                0
-            };
-        }
-
-        if mode1 == 1 && mode2 == 0 {
-            // left operand in immediate, right in address
-            self.instructions[dest] = if self.instructions[self.ip + 1]
-                == self.instructions[self.instructions[self.ip + 2] as usize]
-            {
-                1
-            } else {
-                0
-            };
-        }
-
-        if mode1 == 0 && mode2 == 1 {
-            // left operand in address, right in immediate
-            self.instructions[dest] = if self.instructions[self.instructions[self.ip + 1] as usize]
-                == self.instructions[self.ip + 2]
-            {
-                1
-            } else {
-                0
-            };
-        }
-
-        if mode1 == 1 && mode2 == 1 {
-            // both in immediate mode
-            self.instructions[dest] =
-                if self.instructions[self.ip + 1] == self.instructions[self.ip + 2] {
+    /// Performs the equals operation (opcode 8)
+    fn perform_equals(&mut self, mode1: usize, mode2: usize, dest: usize) {
+        if mode1 == 0 {
+            // address mode
+            if mode2 == 0 {
+                // address mode
+                self.instructions[dest] = if self.instructions
+                    [self.instructions[self.ip + 1] as usize]
+                    == self.instructions[self.instructions[self.ip + 2] as usize]
+                {
                     1
                 } else {
                     0
                 };
+            } else {
+                // immediate mode
+                self.instructions[dest] = if self.instructions
+                    [self.instructions[self.ip + 1] as usize]
+                    == self.instructions[self.ip + 2]
+                {
+                    1
+                } else {
+                    0
+                };
+            }
+        } else {
+            // immediate mode
+            if mode2 == 0 {
+                // address mode
+                self.instructions[dest] = if self.instructions[self.ip + 1]
+                    == self.instructions[self.instructions[self.ip + 2] as usize]
+                {
+                    1
+                } else {
+                    0
+                };
+            } else {
+                // immediate mode
+                self.instructions[dest] =
+                    if self.instructions[self.ip + 1] == self.instructions[self.ip + 2] {
+                        1
+                    } else {
+                        0
+                    };
+            }
         }
 
         self.ip += 4;

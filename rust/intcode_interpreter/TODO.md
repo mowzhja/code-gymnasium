@@ -1,4 +1,4 @@
 - [x] complete first version (day 2)
-- [ ] complete second version (day 5)
-- [ ] REFACTOR!
+- [x] complete second version (day 5)
+- [ ] REFACTOR (later)!
     - [ ] Make the modes boolean and change their names (call them immediate, so we can check "if immediate" which is clearer)

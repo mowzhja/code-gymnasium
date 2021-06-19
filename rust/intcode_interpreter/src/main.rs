@@ -1,8 +1,10 @@
+use std::env;
 use std::fs;
 
 use intcode_interpreter::*;
 
 fn main() {
+    let file = env::args().nth(1).expect("usage: intepreter <file name>");
     // let text = fs::read_to_string("code.txt").expect("error reading file");
     // let p_vec = parse_program(&text);
     // let program = program::Program::new(p_vec);
@@ -23,7 +25,7 @@ fn main() {
     // println!("Error bruteforcing target!");
 
     // Day 5, Part 1:
-    let text = fs::read_to_string("tests.txt").expect("error reading file");
+    let text = fs::read_to_string(file).expect("error reading file");
     let p_vec = parse_program(&text);
     let mut program = program::Program::new(p_vec);
 
