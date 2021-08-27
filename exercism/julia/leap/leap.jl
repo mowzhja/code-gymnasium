@@ -16,5 +16,3 @@ function is_leap_year(year)
 
     return true
 end
-
-    
