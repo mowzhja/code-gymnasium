@@ -7,79 +7,49 @@ import (
 
 // Validates a number according to the Luhn algorithm (https://en.wikipedia.org/wiki/Luhn_algorithm)
 func Valid(number string) bool {
-	spacelessNumber := strings.ReplaceAll(number, " ", "")
-	if !ok(spacelessNumber) {
+	number = strings.ReplaceAll(number, " ", "")
+	if !ok(number) {
 		return false
 	}
-	doubledNumber := doubleDigits(spacelessNumber)
 
-	luhnSum := sumDigits(doubledNumber)
-	return luhnSum%10 == 0
-}
+	sum := 0
+	isEvenLength := len(number)%2 == 0
 
-// Creates the string with all the doubled digits.
-func doubleDigits(spacelessNumber string) string {
-	if len(spacelessNumber)%2 == 0 {
-		return evenLengthDouble(spacelessNumber)
-	}
-	return oddLengthDouble(spacelessNumber)
-}
-
-// Takes care of digit doubling if the length of the original string is even.
-func evenLengthDouble(spacelessNumber string) string {
-	var doubleSb strings.Builder
-
-	for i := 0; i < len(spacelessNumber); i++ {
-		if i%2 == 0 {
-			doubleSb.WriteByte(doubleChar(spacelessNumber[i]))
-		} else {
-			doubleSb.WriteByte(spacelessNumber[i])
-		}
+	for i, r := range number {
+		sum += digit(r, i, isEvenLength)
 	}
 
-	return doubleSb.String()
-}
-
-// Takes care of digit doubling if the length of the original string is odd.
-func oddLengthDouble(spacelessNumber string) string {
-	var doubleSb strings.Builder
-
-	for i := 0; i < len(spacelessNumber); i++ {
-		if i%2 != 0 {
-			doubleSb.WriteByte(doubleChar(spacelessNumber[i]))
-		} else {
-			doubleSb.WriteByte(spacelessNumber[i])
-		}
-	}
-
-	return doubleSb.String()
+	return sum%10 == 0
 }
 
 // Double a single character (rune), as long as that rune represents a digit.
-func doubleChar(ch byte) byte {
-	n := int(ch - '0') // good ol' C-style trick
+func digit(r rune, i int, isEvenLength bool) int {
+	n := int(r - '0') // good ol' C-style trick
 
-	m := 2 * n
-	if m > 9 {
-		m -= 9
+	if isEvenLength {
+		if i%2 == 0 {
+			return timesTwo(n)
+		}
+	} else {
+		if i%2 != 0 {
+			return timesTwo(n)
+		}
 	}
 
-	return byte(m + '0')
+	return n
 }
 
-// Sums all the digits making up a string (supposedly a number).
-func sumDigits(number string) int {
-	sum := 0
+// Doubles the input and subtracts 9 if necessary.
+func timesTwo(n int) int {
+	n *= 2
 
-	for _, ch := range number {
-		n := int(ch - '0')
-		sum += n
+	if n > 9 {
+		return n - 9
 	}
-
-	return sum
+	return n
 }
 
-// Checks if the number string received in input is valid (aka has length greater than 1 and is only made up of digits).
+// Checks if the number string received in input is valid (aka is length greater than 1 and is only made up of digits).
 func ok(number string) bool {
 	if len(number) <= 1 {
 		return false
