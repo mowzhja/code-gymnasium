@@ -23,6 +23,8 @@ def best_hands(hands):
     highest_score = max(hand_scores)
     best_idxs = [i for i, s in enumerate(hand_scores) if s == highest_score]
 
+    # FIXME i don't deal with ties at all (all the failing test cases are ties)
+
     return [hands[i] for i in best_idxs]
 
 
@@ -52,8 +54,7 @@ def score_hand(hand):
     elif is_full_house(hand):
         return HandValues.FULL_HOUSE.value
     else:
-        # the high card matters => gotta show that somehow (maybe with decimals?)
-        return HandValues.HIGH_CARD.value
+        return HandValues.HIGH_CARD.value + high_card_value(hand)
 
 
 def is_pair(hand):
@@ -126,6 +127,14 @@ def is_four_kind(hand):
     return False
 
 
+def high_card_value(hand):
+    ranks, _ = isolate_ranks_suits(hand)
+    ranks = [int(r) for r in ranks]
+
+    high_card_rank = max(ranks)
+    return high_card_rank * 0.1
+
+
 def isolate_ranks_suits(hand):
     """
     :returns: a tuple with the first element containing all the ranks and the second all the suits
@@ -149,11 +158,11 @@ def value_of(rank):
     if rank not in ["J", "Q", "K", "A"]:
         return rank
     else:
-        if rank is "J":
+        if rank == "J":
             return "11"
-        if rank is "Q":
+        if rank == "Q":
             return "12"
-        if rank is "K":
+        if rank == "K":
             return "13"
-        if rank is "A":
+        if rank == "A":
             return "1"
