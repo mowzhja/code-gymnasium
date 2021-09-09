@@ -30,3 +30,6 @@ __pycache__/
 
 # for exercism
 .exercism/
+
+# for vscode
+.vscode/
