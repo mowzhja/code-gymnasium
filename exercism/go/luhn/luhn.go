@@ -13,30 +13,20 @@ func Valid(number string) bool {
 	}
 
 	sum := 0
-	isEvenLength := len(number)%2 == 0
+	double := len(number)%2 == 0
 
-	for i, r := range number {
-		sum += digit(r, i, isEvenLength)
+	for _, r := range number {
+		n := int(r - '0')
+
+		if double {
+			n = timesTwo(n)
+		}
+
+		sum += n
+		double = !double
 	}
 
 	return sum%10 == 0
-}
-
-// Double a single character (rune), as long as that rune represents a digit.
-func digit(r rune, i int, isEvenLength bool) int {
-	n := int(r - '0') // good ol' C-style trick
-
-	if isEvenLength {
-		if i%2 == 0 {
-			return timesTwo(n)
-		}
-	} else {
-		if i%2 != 0 {
-			return timesTwo(n)
-		}
-	}
-
-	return n
 }
 
 // Doubles the input and subtracts 9 if necessary.
